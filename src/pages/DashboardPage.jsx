@@ -9,6 +9,35 @@ import { io } from "socket.io-client";
 const API_URL = "http://localhost:4000/produtos";
 const socket = io("http://localhost:4000");
 
+async function fetchProducts() {
+  try {
+    const response = await axios.get(API_URL);
+    return response.data;
+  } catch (err) {
+    throw new Error(err.response?.data?.message || "Erro ao carregar os produtos.");
+  }
+}
+
+async function addProductRequest(newProduct) {
+  try {
+    console.log("addProductRequest", newProduct.nome, newProduct.preco);
+    await axios.post(API_URL, newProduct);
+    socket.emit("updateProdutos");
+  } catch (err) {
+    throw new Error(err.response?.data?.message || "Erro ao adicionar produto.");
+  }
+}
+
+async function updateProductQuantityRequest({ id, quantidade, tipo }) {
+  try {
+    const user = JSON.parse(sessionStorage.getItem("user"));
+    const nome = user.nome;
+    await axios.put(`${API_URL}/${id}`, { quantidade, tipo, nome });
+  } catch (err) {
+    throw new Error(err.response?.data?.message || "Erro ao atualizar quantidade.");
+  }
+}
+
 function DashboardPage() {
   const navigate = useNavigate();
   const user = JSON.parse(sessionStorage.getItem("user"));
@@ -34,33 +63,34 @@ function DashboardPage() {
     },
   });
 
-  async function fetchProducts() {
-    try {
-      const response = await axios.get(API_URL);
-      return response.data;
-    } catch (err) {
-      throw new Error(
-        err.response?.data?.message || "Erro ao carregar os produtos."
-      );
-    }
-  }
+  const { mutate: updateProductQuantity } = useMutation({
+    mutationFn: updateProductQuantityRequest,
+    onSuccess: () => {
+      refetch();
+    },
+    onError: (error) => {
+      alert(error.message);
+    },
+  });
 
-  async function addProductRequest(newProduct) {
-    try {
-      console.log("addProductRequest", newProduct.nome, newProduct.preco);
-      await axios.post(API_URL, newProduct);
-      socket.emit("updateProdutos", newProduct);
-    } catch (err) {
-      throw new Error(
-        err.response?.data?.message || "Erro ao adicionar produto."
-      );
-    }
-  }
+  const handleUpdateQuantity = (id, quantidade, tipo) => {
+    updateProductQuantity({ id, quantidade, tipo });
+  };
 
   const handleLogout = () => {
     sessionStorage.removeItem("user");
-    navigate("/login");
+    navigate("/");
   };
+
+  useEffect(() => {
+    socket.on("updateProdutos", () => {
+      refetch();
+    });
+
+    return () => {
+      socket.off("updateProdutos");
+    };
+  }, []);
 
   if (!user) {
     return (
@@ -83,17 +113,6 @@ function DashboardPage() {
     );
   }
 
-  // Atualizando os produtos ao receber dados via socket
-  useEffect(() => {
-    socket.on("updateProdutos", (updatedProducts) => {
-      refetch(); // Recarrega os produtos ao receber um evento de atualização
-    });
-
-    return () => {
-      socket.off("updateProdutos"); // Limpa o evento ao sair do componente
-    };
-  }, [refetch]);
-
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -109,7 +128,13 @@ function DashboardPage() {
           Adicionar Produto
         </button>
 
-        <ProductList products={products} isLoading={isLoading} error={error} />
+        {/* ✅ Removido o ponto e vírgula */}
+        <ProductList
+          products={products}
+          isLoading={isLoading}
+          error={error}
+          onUpdateQuantity={handleUpdateQuantity}
+        />
 
         {isModalOpen && (
           <Modal
