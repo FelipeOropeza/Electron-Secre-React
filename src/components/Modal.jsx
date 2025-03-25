@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
 function Modal({ closeModal, addProduct }) {
-  const [newProduct, setNewProduct] = useState({ nome: "", preco: "" });
+  const [newProduct, setNewProduct] = useState({ name: "", price: "" });
 
   const handleAddProduct = () => {
-    if (!newProduct.nome || !newProduct.preco) return;
+    if (!newProduct.name || !newProduct.price) return;
     addProduct(newProduct);
-    setNewProduct({ nome: "", preco: "" });
+    setNewProduct({ name: "", price: "" });
     closeModal();
   };
 
@@ -17,15 +17,15 @@ function Modal({ closeModal, addProduct }) {
         <input
           type="text"
           placeholder="Nome do Produto"
-          value={newProduct.nome}
-          onChange={(e) => setNewProduct({ ...newProduct, nome: e.target.value })}
+          value={newProduct.name}
+          onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
           className="border p-2 w-full mb-2 rounded-md"
         />
         <input
           type="number"
           placeholder="Preço"
-          value={newProduct.preco}
-          onChange={(e) => setNewProduct({ ...newProduct, preco: e.target.value })}
+          value={newProduct.price}
+          onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
           className="border p-2 w-full mb-4 rounded-md"
         />
         <div className="flex justify-between">

@@ -20,8 +20,8 @@ function ProductList({ products, isLoading, error, onUpdateQuantity }) {
           {products.map((product) => (
             <li key={product.id} className="py-2 border-b flex justify-between items-center">
               <div>
-                <strong>Nome:</strong> {product.nome} - <strong>Preço:</strong> R$ {product.preco} -
-                <strong>Quantidade:</strong> {product.qtd}
+                <strong>Nome:</strong> {product.name} - <strong>Preço:</strong> R$ {product.price} -
+                <strong>Quantidade:</strong> {product.amount}
               </div>
               <button
                 onClick={() => setSelectedProduct(product)}

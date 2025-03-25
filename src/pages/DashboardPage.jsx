@@ -6,13 +6,13 @@ import ProductList from "../components/ProductList";
 import Modal from "../components/Modal";
 import { io } from "socket.io-client";
 
-const API_URL = "http://localhost:4000/produtos";
+const API_URL = "http://localhost:4000/product";
 const socket = io("http://localhost:4000");
 
 async function fetchProducts() {
   try {
-    const response = await axios.get(API_URL);
-    return response.data;
+    const { data } = await axios.get(API_URL);
+    return data;
   } catch (err) {
     throw new Error(err.response?.data?.message || "Erro ao carregar os produtos.");
   }
@@ -20,7 +20,6 @@ async function fetchProducts() {
 
 async function addProductRequest(newProduct) {
   try {
-    console.log("addProductRequest", newProduct.nome, newProduct.preco);
     await axios.post(API_URL, newProduct);
     socket.emit("updateProdutos");
   } catch (err) {
@@ -31,7 +30,7 @@ async function addProductRequest(newProduct) {
 async function updateProductQuantityRequest({ id, quantidade, tipo }) {
   try {
     const user = JSON.parse(sessionStorage.getItem("user"));
-    const nome = user.nome;
+    const nome = user?.nome || "Desconhecido";
     await axios.put(`${API_URL}/${id}`, { quantidade, tipo, nome });
   } catch (err) {
     throw new Error(err.response?.data?.message || "Erro ao atualizar quantidade.");
@@ -43,34 +42,21 @@ function DashboardPage() {
   const user = JSON.parse(sessionStorage.getItem("user"));
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const {
-    data: products,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
+  const { data: products, isLoading, error, refetch } = useQuery({
     queryKey: ["produtos"],
     queryFn: fetchProducts,
   });
 
   const { mutate: addProduct } = useMutation({
     mutationFn: addProductRequest,
-    onSuccess: () => {
-      refetch();
-    },
-    onError: (error) => {
-      alert(error.message);
-    },
+    onSuccess: () => refetch(),
+    onError: (error) => alert(error.message),
   });
 
   const { mutate: updateProductQuantity } = useMutation({
     mutationFn: updateProductQuantityRequest,
-    onSuccess: () => {
-      refetch();
-    },
-    onError: (error) => {
-      alert(error.message);
-    },
+    onSuccess: () => refetch(),
+    onError: (error) => alert(error.message),
   });
 
   const handleUpdateQuantity = (id, quantidade, tipo) => {
@@ -84,13 +70,13 @@ function DashboardPage() {
 
   useEffect(() => {
     socket.on("updateProdutos", () => {
-      refetch();
+      console.log("Evento updateProdutos recebido");
+      refetch()
     });
-
     return () => {
       socket.off("updateProdutos");
     };
-  }, []);
+  }, [refetch]);
 
   if (!user) {
     return (
@@ -99,9 +85,7 @@ function DashboardPage() {
           <h2 className="text-xl font-bold text-red-600">
             Usuário não autenticado
           </h2>
-          <p className="mt-4">
-            Você precisa estar logado para acessar o dashboard.
-          </p>
+          <p className="mt-4">Você precisa estar logado para acessar o dashboard.</p>
           <button
             onClick={() => navigate("/login")}
             className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
@@ -128,7 +112,6 @@ function DashboardPage() {
           Adicionar Produto
         </button>
 
-        {/* ✅ Removido o ponto e vírgula */}
         <ProductList
           products={products}
           isLoading={isLoading}
@@ -136,12 +119,7 @@ function DashboardPage() {
           onUpdateQuantity={handleUpdateQuantity}
         />
 
-        {isModalOpen && (
-          <Modal
-            closeModal={() => setIsModalOpen(false)}
-            addProduct={addProduct}
-          />
-        )}
+        {isModalOpen && <Modal closeModal={() => setIsModalOpen(false)} addProduct={addProduct} />}
 
         <button
           onClick={handleLogout}

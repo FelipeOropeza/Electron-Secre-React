@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 function LoginPage() {
   const [ra, setRa] = useState('');
-  const [senha, setSenha] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -16,15 +16,12 @@ function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:4000/login', { ra, senha });
+      const response = await axios.post('http://localhost:4000/login', { ra, password });
 
-      // Sucesso! Armazena o token ou faz outro tratamento
       console.log('Login bem-sucedido', response.data);
 
-      // Armazenar dados no sessionStorage (ou localStorage, conforme necessidade)
       sessionStorage.setItem('user', JSON.stringify(response.data.user));
 
-      // Redireciona para o Dashboard
       navigate('/dashboard');
     } catch (err) {
       setError('Erro ao realizar login. Tente novamente.');
@@ -53,14 +50,14 @@ function LoginPage() {
             />
           </div>
           <div>
-            <label htmlFor="senha" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Senha
             </label>
             <input
               type="password"
-              id="senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 mt-1 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-600"
               required
             />
