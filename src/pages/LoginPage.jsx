@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import axios from 'axios';
+import { AuthContext } from "../context/AuthContext"
 import { useNavigate } from 'react-router-dom';
 
-function LoginPage() {
+const LoginPage = () => {
   const [ra, setRa] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError('');
     setIsLoading(true);
 
@@ -20,7 +21,7 @@ function LoginPage() {
 
       console.log('Login bem-sucedido', response.data);
 
-      sessionStorage.setItem('user', JSON.stringify(response.data.user));
+      login(response.data.user, response.data.token);
 
       navigate('/dashboard');
     } catch (err) {
@@ -76,6 +77,6 @@ function LoginPage() {
       </div>
     </div>
   );
-}
+};
 
 export default LoginPage;
