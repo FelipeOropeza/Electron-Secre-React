@@ -1,23 +1,10 @@
-import { Link } from "react-router-dom";
-import { CreditCard, DollarSign, Home } from "lucide-react";
+import { CreditCard, DollarSign } from "lucide-react";
+import NavBar from "../components/NavBar";
 
 function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-md fixed top-0 left-0 w-full px-6 py-4 flex justify-between items-center z-10">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          Painel Financeiro
-        </h1>
-        <div className="flex gap-4">
-          <Link to="/" className="text-gray-600 hover:text-blue-500 transition flex items-center gap-2">
-            <Home size={20} /> Início
-          </Link>
-          <Link to="/contas" className="text-gray-600 hover:text-blue-500 transition flex items-center gap-2">
-            <CreditCard size={20} /> Contas
-          </Link>
-        </div>
-      </nav>
-
+      <NavBar />
       <div className="flex flex-col items-center justify-center pt-20 p-6">
         <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-lg">
           <div className="flex items-center justify-between mb-6 border-b pb-4">
