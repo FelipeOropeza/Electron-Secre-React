@@ -1,21 +1,48 @@
-import { useState } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Plus } from "lucide-react";
 import NavBar from "../components/NavBar";
 import Modal from "../components/Modal";
+import { AuthContext } from "../context/AuthContext";
+import axios from "axios";
+
+const API_URL = "http://localhost:4000/account";
 
 function ContasPage() {
-  const [contas, setContas] = useState([
-    { id: 1, description: "Aluguel", amount: 1200.5, dueDate: "2025-04-10", status: "pendente", type: "despesa" },
-    { id: 2, description: "Salário", amount: 3500.0, dueDate: "2025-04-05", status: "recebido", type: "receita" },
-  ]);
-
   const [modalOpen, setModalOpen] = useState(false);
+  const [contas, setContas] = useState([]); 
+  const { user } = useContext(AuthContext);
 
   const toggleModal = () => setModalOpen(!modalOpen);
 
-  const handleAddConta = (novaConta) => {
-    const newEntry = { ...novaConta, id: contas.length + 1, amount: parseFloat(novaConta.amount) };
-    setContas([...contas, newEntry]);
+  const fetchContas = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setContas(response.data);
+    } catch (error) {
+      console.error("Erro ao buscar contas:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchContas();
+  }, []);
+
+  const handleAddConta = async (novaConta) => {
+    const newObjectConta = {
+      ...novaConta,
+      amount: parseFloat(novaConta.amount),
+      companyId: user.companyId,
+      userId: user.id,
+    };
+
+    try {
+      const response = await axios.post(API_URL, newObjectConta);
+      if (response.status === 201) {
+        fetchContas();
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar conta:", error);
+    }
   };
 
   return (
@@ -45,23 +72,34 @@ function ContasPage() {
               </tr>
             </thead>
             <tbody>
-              {contas.map((conta) => (
-                <tr key={conta.id} className="border-b">
-                  <td className="p-3">{conta.description}</td>
-                  <td className="p-3">R$ {conta.amount.toFixed(2)}</td>
-                  <td className="p-3">{conta.dueDate}</td>
-                  <td className={`p-3 ${conta.status === "recebido" ? "text-green-600" : "text-red-600"}`}>
-                    {conta.status}
+              {contas.length > 0 ? (
+                contas.map((conta) => (
+                  <tr key={conta.id} className="border-b">
+                    <td className="p-3">{conta.description}</td>
+                    <td className="p-3">R$ {conta.amount.toFixed(2)}</td>
+                    <td className="p-3">{conta.dueDate}</td>
+                    <td
+                      className={`p-3 ${
+                        conta.status === "recebido" ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {conta.status}
+                    </td>
+                    <td className="p-3">{conta.type}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" className="p-3 text-center text-gray-500">
+                    Nenhuma conta cadastrada.
                   </td>
-                  <td className="p-3">{conta.type}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Modal de Cadastro */}
       <Modal isOpen={modalOpen} onClose={toggleModal} onSave={handleAddConta} />
     </div>
   );
