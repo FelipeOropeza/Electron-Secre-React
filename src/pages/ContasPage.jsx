@@ -5,6 +5,7 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import NavBar from "../components/NavBar";
 import Modal from "../components/Modal";
+import EditModal from "../components/EditModal";
 import { AuthContext } from "../context/AuthContext";
 
 const API_URL = "http://localhost:4000/account";
@@ -12,6 +13,8 @@ const socket = io("http://localhost:4000");
 
 function ContasPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [contaSelecionada, setContaSelecionada] = useState(null);
   const { user } = useContext(AuthContext);
   const queryClient = useQueryClient();
 
@@ -36,6 +39,16 @@ function ContasPage() {
     onSuccess: () => {
       queryClient.invalidateQueries(["contas"]);
       setModalOpen(false);
+    },
+  });
+
+  const updateContaMutation = useMutation({
+    mutationFn: async (contaAtualizada) => {
+      return axios.put(`${API_URL}/${contaAtualizada.id}`, contaAtualizada);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["contas"]);
+      setEditModalOpen(false);
     },
   });
 
@@ -75,6 +88,7 @@ function ContasPage() {
                   <th className="p-3">Vencimento</th>
                   <th className="p-3">Status</th>
                   <th className="p-3">Tipo</th>
+                  <th className="p-3">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -84,10 +98,27 @@ function ContasPage() {
                       <td className="p-3">{conta.description}</td>
                       <td className="p-3">R$ {conta.amount.toFixed(2)}</td>
                       <td className="p-3">{conta.dueDate}</td>
-                      <td className={`p-3 ${conta.status === "recebido" ? "text-green-600" : "text-red-600"}`}>
+                      <td
+                        className={`p-3 ${
+                          conta.status === "recebido"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
                         {conta.status}
                       </td>
                       <td className="p-3">{conta.type}</td>
+                      <td className="p-3">
+                        <button
+                          onClick={() => {
+                            setContaSelecionada(conta);
+                            setEditModalOpen(true);
+                          }}
+                          className="text-blue-500 hover:underline"
+                        >
+                          Editar
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -103,7 +134,18 @@ function ContasPage() {
         </div>
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSave={addContaMutation.mutate} />
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={addContaMutation.mutate}
+      />
+
+      <EditModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        onSave={updateContaMutation.mutate}
+        conta={contaSelecionada}
+      />
     </div>
   );
 }
